@@ -80,10 +80,7 @@ $conn->query($update_status_sql);
 </head>
 
 <body class="bg-gray-100">
-  <?php include '../components/notification.php';
-    if (isset($_GET['success'])) echo showNotification($_GET['success']);
-    if (isset($_GET['error'])) echo showNotification($_GET['error'], 'error');
-    ?>
+
 
   <div class="flex">
     <!-- Include Sidebar -->

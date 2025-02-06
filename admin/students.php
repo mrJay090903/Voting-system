@@ -59,34 +59,13 @@ $total_pages = ceil($total_students / $limit);
 </head>
 
 <body class="bg-gray-100">
-  <?php include '../components/notification.php';
-    if (isset($_GET['success'])) echo showNotification($_GET['success']);
-    if (isset($_GET['error'])) echo showNotification($_GET['error'], 'error');
-    ?>
+
+
+
 
   <div class="flex">
-    <!-- Sidebar -->
-    <div class="w-64 bg-blue-800 min-h-screen px-4 py-6">
-      <div class="text-white text-xl font-semibold mb-8">Admin Panel</div>
-      <nav class="space-y-2">
-        <a href="dashboard.php" class="flex items-center text-white py-2.5 px-4 hover:bg-blue-700 rounded">
-          <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
-        </a>
-        <a href="students.php" class="flex items-center text-white py-2.5 px-4 bg-blue-700 rounded">
-          <i class="fas fa-users mr-3"></i> Students
-        </a>
-        <a href="elections.php" class="flex items-center text-white py-2.5 px-4 hover:bg-blue-700 rounded">
-          <i class="fas fa-vote-yea mr-3"></i> Elections
-        </a>
-        <a href="candidates.php" class="flex items-center text-white py-2.5 px-4 hover:bg-blue-700 rounded">
-          <i class="fas fa-user-tie mr-3"></i> Candidates
-        </a>
-        <a href="results.php" class="flex items-center text-white py-2.5 px-4 hover:bg-blue-700 rounded">
-          <i class="fas fa-chart-bar mr-3"></i> Results
-        </a>
-      </nav>
-    </div>
 
+    <?php include '../components/admin_sidebar.php'; ?>
     <!-- Main Content -->
     <div class="flex-1">
       <!-- Top Navigation -->

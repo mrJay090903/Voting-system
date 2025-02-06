@@ -2,6 +2,8 @@
 session_start();
 include '../database/db.php';
 
+
+
 if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
     header("Location: ../index.php");
     exit();
@@ -197,6 +199,7 @@ while ($row = $candidate_summary_result->fetch_assoc()) {
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 
 <body class="bg-gray-50">
@@ -205,6 +208,8 @@ while ($row = $candidate_summary_result->fetch_assoc()) {
 
     <div class="flex-1 overflow-auto">
       <!-- Top Navigation -->
+      <!-- Sidebar Toggle Button -->
+
       <div class="bg-white shadow-sm px-6 py-3 flex justify-between items-center sticky top-0 z-10">
         <h1 class="text-2xl font-bold text-gray-800">Dashboard Overview</h1>
         <div class="flex items-center space-x-4">
@@ -472,33 +477,33 @@ while ($row = $candidate_summary_result->fetch_assoc()) {
 
   // Define the position order
   const positionOrder = [
-      'President',
-      'Vice President',
-      'Secretary',
-      'Treasurer',
-      'Auditor',
-      'PIO',
-      'Protocol Officer',
-      'Grade 7 Representative',
-      'Grade 8 Representative',
-      'Grade 9 Representative',
-      'Grade 10 Representative',
-      'Grade 11 Representative',
-      'Grade 12 Representative'
+    'President',
+    'Vice President',
+    'Secretary',
+    'Treasurer',
+    'Auditor',
+    'PIO',
+    'Protocol Officer',
+    'Grade 7 Representative',
+    'Grade 8 Representative',
+    'Grade 9 Representative',
+    'Grade 10 Representative',
+    'Grade 11 Representative',
+    'Grade 12 Representative'
   ];
 
   // Create legend items in order
   positionOrder.forEach(position => {
-      if (position in <?php echo json_encode($positionColors); ?>) {
-          const color = <?php echo json_encode($positionColors); ?>[position];
-          const legendItem = document.createElement('div');
-          legendItem.className = 'flex items-center gap-2';
-          legendItem.innerHTML = `
+    if (position in <?php echo json_encode($positionColors); ?>) {
+      const color = <?php echo json_encode($positionColors); ?>[position];
+      const legendItem = document.createElement('div');
+      legendItem.className = 'flex items-center gap-2';
+      legendItem.innerHTML = `
               <div class="w-3 h-3 rounded-full" style="background-color: ${color}"></div>
               <span class="text-xs text-gray-600">${position}</span>
           `;
-          positionLegend.appendChild(legendItem);
-      }
+      positionLegend.appendChild(legendItem);
+    }
   });
 
   // Voting Participation Chart
@@ -589,6 +594,34 @@ while ($row = $candidate_summary_result->fetch_assoc()) {
           }
         }
       }
+    }
+  });
+  const toggleButton = document.getElementById('toggleSidebar');
+  const closeButton = document.getElementById('closeSidebar');
+  const sidebar = document.getElementById('sidebar');
+
+  // Toggle Sidebar on Click
+  toggleButton.addEventListener('click', function() {
+    if (window.innerWidth >= 768) {
+      // Desktop: Collapse sidebar
+      sidebar.classList.toggle('collapsed');
+    } else {
+      // Mobile: Show/Hide sidebar
+      sidebar.classList.toggle('-translate-x-full');
+    }
+  });
+
+  // Close Sidebar on Mobile when X is clicked
+  if (closeButton) {
+    closeButton.addEventListener('click', function() {
+      sidebar.classList.add('-translate-x-full');
+    });
+  }
+
+  // Close sidebar when clicking outside (Mobile Only)
+  document.addEventListener('click', function(event) {
+    if (!sidebar.contains(event.target) && !toggleButton.contains(event.target) && window.innerWidth < 768) {
+      sidebar.classList.add('-translate-x-full');
     }
   });
   </script>

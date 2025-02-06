@@ -75,7 +75,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['vote'])) {
     $vote_count = $vote_count_result->fetch_assoc()['vote_count'];
 
     // Check if the student has already voted three times for the same position
-    if ($vote_count >= 3) {
+    if ($vote_count >= 2) {
         // If the limit is reached, show an error
         echo json_encode(['error' => 'You have already voted three times for this position.']);
         exit();
