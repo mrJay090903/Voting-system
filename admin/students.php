@@ -81,12 +81,15 @@ $total_pages = ceil($total_students / $results_per_page);
 
   <div class="flex">
     <!-- Include Sidebar -->
-    <?php include '../components/admin_sidebar.php'; ?>
+    <div class="sticky top-0 h-screen  ">
+      <?php include '../components/admin_sidebar.php'; ?>
+    </div>
+
 
     <!-- Main Content -->
     <div class="flex-1">
       <!-- Top Navigation -->
-      <div class="bg-white shadow-md px-6 py-4 flex justify-between items-center">
+      <div class="bg-white shadow-md px-6 py-4 flex justify-between items-center sticky top-0 z-10">
         <h1 class="text-xl font-semibold">Student Management</h1>
         <div class="flex items-center space-x-4">
 

@@ -19,11 +19,14 @@ $candidates = $conn->query("
         e.title as election_title,
         e.status as election_status,
         COALESCE(p.name, 'Independent') as partylist_name,
-        p.logo_url as partylist_logo
+        p.logo_url as partylist_logo,
+        COUNT(v.id) as votes
     FROM candidates c 
     JOIN students s ON c.student_id = s.StudentID 
     JOIN elections e ON c.election_id = e.id 
     LEFT JOIN partylists p ON c.partylist_name = p.name
+    LEFT JOIN votes v ON c.id = v.candidate_id
+    GROUP BY c.id, s.FullName, s.Grade, e.title, e.status, p.name, p.logo_url
     ORDER BY 
         FIELD(c.position, 'President', 'Vice President', 'Secretary', 'Treasurer', 'Auditor', 'PIO', 'Protocol Officer', 
         'Grade 7 Representative', 'Grade 8 Representative', 'Grade 9 Representative', 'Grade 10 Representative', 
@@ -103,12 +106,14 @@ $elections = $conn->query("
 
   <div class="flex">
     <!-- Include Sidebar -->
-    <?php include '../components/admin_sidebar.php'; ?>
+    <div class="sticky top-0 h-screen  ">
+      <?php include '../components/admin_sidebar.php'; ?>
+    </div>
 
     <!-- Main Content -->
     <div class="flex-1">
       <!-- Top Navigation -->
-      <div class="bg-white shadow-md px-6 py-4 flex justify-between items-center">
+      <div class="bg-white shadow-md px-6 py-4 flex justify-between items-center sticky top-0">
         <h1 class="text-xl font-semibold">Candidates Management</h1>
         <div class="flex items-center space-x-4">
           <button onclick="openAddModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
@@ -164,150 +169,152 @@ $elections = $conn->query("
             </tbody>
           </table>
         </div>
-      </div>
 
-      <!-- Partylist Management Section -->
-      <div class="mt-8">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-semibold">Partylists</h2>
-          <button onclick="openPartylistModal()"
-            class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
-            <i class="fas fa-plus mr-2"></i>Add Partylist
-          </button>
-        </div>
 
-        <!-- Partylists Table -->
-        <div class="bg-white rounded-lg shadow-md overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Logo</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <?php 
+        <!-- Partylist Management Section -->
+        <div class="mt-8">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-semibold">Partylists</h2>
+            <button onclick="openPartylistModal()"
+              class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
+              <i class="fas fa-plus mr-2"></i>Add Partylist
+            </button>
+          </div>
+
+          <!-- Partylists Table -->
+          <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Logo</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <?php 
                       $partylists->data_seek(0);
                       while($partylist = $partylists->fetch_assoc()): 
                       ?>
-              <tr>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <?php if($partylist['logo_url']): ?>
-                  <img src="../<?php echo htmlspecialchars($partylist['logo_url']); ?>"
-                    class="h-10 w-10 rounded-full object-cover">
-                  <?php else: ?>
-                  <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                    <i class="fas fa-users text-gray-400"></i>
-                  </div>
-                  <?php endif; ?>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($partylist['name']); ?></td>
-                <td class="px-6 py-4"><?php echo htmlspecialchars($partylist['description']); ?></td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span
-                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <?php if($partylist['logo_url']): ?>
+                    <img src="../<?php echo htmlspecialchars($partylist['logo_url']); ?>"
+                      class="h-10 w-10 rounded-full object-cover">
+                    <?php else: ?>
+                    <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                      <i class="fas fa-users text-gray-400"></i>
+                    </div>
+                    <?php endif; ?>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($partylist['name']); ?></td>
+                  <td class="px-6 py-4"><?php echo htmlspecialchars($partylist['description']); ?></td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span
+                      class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                   <?php echo $partylist['status'] === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?>">
-                    <?php echo ucfirst($partylist['status']); ?>
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button onclick="openEditPartylistModal(<?php echo $partylist['id']; ?>)"
-                    class="text-blue-600 hover:text-blue-900 mr-3">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button onclick="confirmDeletePartylist(<?php echo $partylist['id']; ?>)"
-                    class="text-red-600 hover:text-red-900">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </td>
-              </tr>
-              <?php endwhile; ?>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Add Partylist Modal -->
-      <div id="partylistModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-          <div class="mt-3">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-medium text-gray-900">Add New Partylist</h3>
-              <button onclick="closePartylistModal()" class="text-gray-400 hover:text-gray-500">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-            <form action="actions/add_partylist.php" method="POST" enctype="multipart/form-data">
-              <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Name</label>
-                <input type="text" name="name" required
-                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              </div>
-              <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Description</label>
-                <textarea name="description" required rows="3"
-                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
-              </div>
-              <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Logo</label>
-                <input type="file" name="logo" accept="image/*"
-                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              </div>
-              <div class="flex justify-end">
-                <button type="button" onclick="closePartylistModal()"
-                  class="bg-gray-500 text-white px-4 py-2 rounded mr-2">Cancel</button>
-                <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Add Partylist</button>
-              </div>
-            </form>
+                      <?php echo ucfirst($partylist['status']); ?>
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button onclick="openEditPartylistModal(<?php echo $partylist['id']; ?>)"
+                      class="text-blue-600 hover:text-blue-900 mr-3">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="confirmDeletePartylist(<?php echo $partylist['id']; ?>)"
+                      class="text-red-600 hover:text-red-900">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                <?php endwhile; ?>
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
 
-      <!-- Edit Partylist Modal -->
-      <div id="editPartylistModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-          <div class="mt-3">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-medium text-gray-900">Edit Partylist</h3>
-              <button onclick="closeEditPartylistModal()" class="text-gray-400 hover:text-gray-500">
-                <i class="fas fa-times"></i>
-              </button>
+        <!-- Add Partylist Modal -->
+        <div id="partylistModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+          <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Add New Partylist</h3>
+                <button onclick="closePartylistModal()" class="text-gray-400 hover:text-gray-500">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <form action="actions/add_partylist.php" method="POST" enctype="multipart/form-data">
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2">Name</label>
+                  <input type="text" name="name" required
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2">Description</label>
+                  <textarea name="description" required rows="3"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2">Logo</label>
+                  <input type="file" name="logo" accept="image/*"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="flex justify-end">
+                  <button type="button" onclick="closePartylistModal()"
+                    class="bg-gray-500 text-white px-4 py-2 rounded mr-2">Cancel</button>
+                  <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Add Partylist</button>
+                </div>
+              </form>
             </div>
-            <form action="actions/edit_partylist.php" method="POST" enctype="multipart/form-data">
-              <input type="hidden" name="partylist_id" id="edit_partylist_id">
-              <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Name</label>
-                <input type="text" name="name" id="edit_partylist_name" required
-                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+          </div>
+        </div>
+
+        <!-- Edit Partylist Modal -->
+        <div id="editPartylistModal"
+          class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+          <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Edit Partylist</h3>
+                <button onclick="closeEditPartylistModal()" class="text-gray-400 hover:text-gray-500">
+                  <i class="fas fa-times"></i>
+                </button>
               </div>
-              <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Description</label>
-                <textarea name="description" id="edit_partylist_description" required rows="3"
-                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
-              </div>
-              <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Status</label>
-                <select name="status" id="edit_partylist_status" required
-                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-              <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Logo</label>
-                <input type="file" name="logo" accept="image/*"
-                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <div id="current_logo" class="mt-2"></div>
-              </div>
-              <div class="flex justify-end">
-                <button type="button" onclick="closeEditPartylistModal()"
-                  class="bg-gray-500 text-white px-4 py-2 rounded mr-2">Cancel</button>
-                <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Update Partylist</button>
-              </div>
-            </form>
+              <form action="actions/edit_partylist.php" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="partylist_id" id="edit_partylist_id">
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2">Name</label>
+                  <input type="text" name="name" id="edit_partylist_name" required
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2">Description</label>
+                  <textarea name="description" id="edit_partylist_description" required rows="3"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2">Status</label>
+                  <select name="status" id="edit_partylist_status" required
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2">Logo</label>
+                  <input type="file" name="logo" accept="image/*"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                  <div id="current_logo" class="mt-2"></div>
+                </div>
+                <div class="flex justify-end">
+                  <button type="button" onclick="closeEditPartylistModal()"
+                    class="bg-gray-500 text-white px-4 py-2 rounded mr-2">Cancel</button>
+                  <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Update Partylist</button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>

@@ -87,7 +87,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['vote'])) {
     $vote_count_result = $conn->query($vote_count_sql);
     $vote_count = $vote_count_result->fetch_assoc()['vote_count'];
 
-    // Check if the student has already voted three times for the same position
+    // Check if the student has already voted two times for the same position
     if ($vote_count >= 2) {
         // If the limit is reached, show an error
         echo json_encode(['error' => 'You have already voted three times for this position.']);
@@ -408,7 +408,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['vote'])) {
             // Show error message using Noty
             new Noty({
               type: 'error',
-              layout: 'topRight',
+              layout: 'topCenter',
+              theme: 'metroui',
               text: result.error,
               timeout: 3000
             }).show();
@@ -420,7 +421,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['vote'])) {
             // Show success message using Noty
             new Noty({
               type: 'success',
-              layout: 'topRight',
+              theme: 'metroui',
+              layout: 'topCenter',
               text: result.success,
               timeout: 3000
             }).show();
@@ -429,7 +431,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['vote'])) {
         error: function() {
           new Noty({
             type: 'error',
-            layout: 'topRight',
+            layout: 'topCenter',
+            theme: 'metroui',
             text: "Failed to cast your vote. Please try again.",
             timeout: 3000
           }).show();

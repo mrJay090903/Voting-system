@@ -11,10 +11,12 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
 if (isset($_GET['id'])) {
     $id = mysqli_real_escape_string($conn, $_GET['id']);
     
-    $sql = "SELECT c.*, s.FullName as student_name 
-            FROM candidates c 
-            JOIN students s ON c.student_id = s.StudentID 
-            WHERE c.id = '$id'";
+    $sql = "SELECT c.*, s.FullName as student_name, COUNT(v.id) as vote_count 
+        FROM candidates c 
+        JOIN students s ON c.student_id = s.StudentID 
+        LEFT JOIN votes v ON c.id = v.candidate_id 
+        WHERE c.id = '$id' 
+        GROUP BY c.id";
             
     $result = $conn->query($sql);
 

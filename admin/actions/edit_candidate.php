@@ -34,6 +34,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
+    // Check if the position is being changed and if there are votes associated with the current position
+    $current_position_query = "SELECT position FROM candidates WHERE id = '$candidate_id'";
+    $current_position_result = $conn->query($current_position_query);
+    $current_position = $current_position_result->fetch_assoc()['position'];
+
+    if ($current_position !== $position) {
+        $votes_check_query = "SELECT COUNT(*) as vote_count FROM votes WHERE candidate_position = '$current_position'";
+        $votes_check_result = $conn->query($votes_check_query);
+        $vote_count = $votes_check_result->fetch_assoc()['vote_count'];
+
+        if ($vote_count > 0) {
+            header("Location: ../candidates.php?error=Cannot update candidate position as there are associated votes.");
+            exit();
+        }
+    }
+
     // Update candidate
     $sql = "UPDATE candidates SET 
             position = '$position',
@@ -44,6 +60,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             mission = '$mission'
             $image_sql
             WHERE id = '$candidate_id'";
+
+    // TODO: Add logic to update vote count if necessary
 
     if ($conn->query($sql) === TRUE) {
         header("Location: ../candidates.php?success=Candidate updated successfully");

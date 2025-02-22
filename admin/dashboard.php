@@ -217,6 +217,7 @@ while ($row = $candidate_summary_result->fetch_assoc()) {
             <i class="fas fa-sign-out-alt"></i>
             Logout
           </a>
+
         </div>
       </div>
 
