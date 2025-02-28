@@ -3,7 +3,6 @@ session_start();
 include '../database/db.php';
 
 
-
 // Check if user is logged in as admin
 if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
     header("Location: ../index.php");
