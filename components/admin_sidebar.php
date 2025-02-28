@@ -35,32 +35,10 @@
         class="flex items-center text-white py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700">
         <i class="fas fa-chart-bar mr-3"></i> Results
       </a>
+      <a href="actions/print_votes.php"
+        class="flex items-center text-white py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700">
+        <i class="fas fa-print mr-3"></i> Student Votes
+      </a>
     </nav>
   </div>
 </div>
-
-<!-- Add SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<script>
-document.getElementById('menu-toggle').addEventListener('click', function() {
-  const sidebar = document.getElementById('sidebar');
-  sidebar.classList.toggle('-translate-x-full');
-});
-
-// Function to show results dialog
-function showResultsDialog() {
-  Swal.fire({
-    title: 'Election Results',
-    text: 'Do you want to download the PDF?',
-    icon: 'info',
-    showCancelButton: true,
-    confirmButtonText: 'Download PDF',
-    cancelButtonText: 'Cancel'
-  }).then((result) => {
-    if (result.isConfirmed) {
-      window.location.href = 'results.php?generate_pdf=1'; // Redirect to PDF generation
-    }
-  });
-}
-</script>

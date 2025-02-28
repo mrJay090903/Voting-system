@@ -96,6 +96,8 @@ $elections = $conn->query("
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 </head>
 
 <body class="bg-gray-100">
@@ -331,7 +333,8 @@ $elections = $conn->query("
             <i class="fas fa-times"></i>
           </button>
         </div>
-        <form action="actions/add_candidate.php" method="POST" enctype="multipart/form-data">
+        <form action="actions/add_candidate.php" method="POST" enctype="multipart/form-data"
+          onsubmit="return prepareImageSubmit(this, 'add')">
           <div class="grid grid-cols-2 gap-4">
             <div class="mb-4">
               <label class="block text-gray-700 text-sm font-bold mb-2">Election</label>
@@ -409,8 +412,17 @@ $elections = $conn->query("
 
             <div class="mb-4">
               <label class="block text-gray-700 text-sm font-bold mb-2">Photo</label>
-              <input type="file" name="image" accept="image/*"
-                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+              <input type="file" name="image" accept="image/*" id="addPhotoInput"
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                onchange="previewImage(this, 'addImagePreview', 'addCropButton')">
+              <div class="mt-2">
+                <img id="addImagePreview" class="hidden max-w-xs">
+                <button type="button" id="addCropButton" onclick="openCropModal('addImagePreview')"
+                  class="hidden mt-2 bg-green-500 text-white px-4 py-2 rounded">
+                  Crop Image
+                </button>
+              </div>
+              <input type="hidden" name="cropped_image" id="addCroppedImage">
             </div>
           </div>
 
@@ -454,7 +466,8 @@ $elections = $conn->query("
             <i class="fas fa-times"></i>
           </button>
         </div>
-        <form action="actions/edit_candidate.php" method="POST" enctype="multipart/form-data">
+        <form action="actions/edit_candidate.php" method="POST" enctype="multipart/form-data"
+          onsubmit="return prepareImageSubmit(this, 'edit')">
           <input type="hidden" name="candidate_id" id="edit_candidate_id">
           <div class="grid grid-cols-2 gap-4">
             <div class="mb-4">
@@ -505,9 +518,18 @@ $elections = $conn->query("
 
             <div class="mb-4">
               <label class="block text-gray-700 text-sm font-bold mb-2">Photo</label>
-              <input type="file" name="image" accept="image/*"
-                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              <div id="current_image" class="mt-2"></div>
+              <input type="file" name="image" accept="image/*" id="editPhotoInput"
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                onchange="previewImage(this, 'editImagePreview', 'editCropButton')">
+              <div class="mt-2">
+                <img id="editImagePreview" class="hidden max-w-xs">
+                <button type="button" id="editCropButton" onclick="openCropModal('editImagePreview')"
+                  class="hidden mt-2 bg-green-500 text-white px-4 py-2 rounded">
+                  Crop Image
+                </button>
+                <div id="current_image" class="mt-2"></div>
+              </div>
+              <input type="hidden" name="cropped_image" id="editCroppedImage">
             </div>
           </div>
 
@@ -537,6 +559,30 @@ $elections = $conn->query("
             <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Update Candidate</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Image Crop Modal -->
+  <div id="cropModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+    <div class="relative top-20 mx-auto p-5 border w-[800px] shadow-lg rounded-md bg-white">
+      <div class="mt-3">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-medium text-gray-900">Crop Image</h3>
+          <button onclick="closeCropModal()" class="text-gray-400 hover:text-gray-500">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="flex justify-center">
+          <div class="max-w-full max-h-[500px] overflow-auto">
+            <img id="cropImage" class="max-w-full">
+          </div>
+        </div>
+        <div class="flex justify-end mt-4">
+          <button type="button" onclick="closeCropModal()"
+            class="bg-gray-500 text-white px-4 py-2 rounded mr-2">Cancel</button>
+          <button type="button" onclick="cropImage()" class="bg-green-500 text-white px-4 py-2 rounded">Crop</button>
+        </div>
       </div>
     </div>
   </div>
@@ -617,14 +663,30 @@ $elections = $conn->query("
         document.getElementById('edit_vision').value = candidate.vision;
         document.getElementById('edit_mission').value = candidate.mission;
 
-        togglePartylist(candidate.candidate_type, 'edit');
+        // Handle partylist selection first
+        const partylistField = document.getElementById('editPartylistField');
+        const partylistSelect = document.getElementById('edit_partylist_name');
+
         if (candidate.candidate_type === 'partylist') {
-          document.getElementById('edit_partylist_name').value = candidate.partylist_name;
+          partylistField.classList.remove('hidden');
+          partylistSelect.required = true;
+          if (candidate.partylist_name) {
+            partylistSelect.value = candidate.partylist_name;
+          }
+        } else {
+          partylistField.classList.add('hidden');
+          partylistSelect.required = false;
+          partylistSelect.value = '';
         }
 
+        // Handle image preview
         if (candidate.image_url) {
+          const preview = document.getElementById('editImagePreview');
+          preview.src = `../${candidate.image_url}`;
+          preview.classList.remove('hidden');
+          document.getElementById('editCropButton').classList.remove('hidden');
           document.getElementById('current_image').innerHTML = `
-                    <img src="../${candidate.image_url}" class="h-20 w-20 object-cover rounded">
+                    <img src="../${candidate.image_url}" class="h-20 w-20 object-cover rounded mt-2">
                 `;
         }
 
@@ -687,6 +749,155 @@ $elections = $conn->query("
 
   function closeEditPartylistModal() {
     document.getElementById('editPartylistModal').classList.add('hidden');
+  }
+
+  let cropper;
+  let currentImageId;
+
+  function previewImage(input, previewId, cropButtonId) {
+    const preview = document.getElementById(previewId);
+    const cropButton = document.getElementById(cropButtonId);
+
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        preview.src = e.target.result;
+        preview.classList.remove('hidden');
+        cropButton.classList.remove('hidden');
+      }
+
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  function openCropModal(imageId) {
+    currentImageId = imageId;
+    const originalImage = document.getElementById(imageId);
+    const cropImage = document.getElementById('cropImage');
+
+    cropImage.src = originalImage.src;
+    document.getElementById('cropModal').classList.remove('hidden');
+
+    if (cropper) {
+      cropper.destroy();
+    }
+
+    cropper = new Cropper(cropImage, {
+      aspectRatio: 1,
+      viewMode: 2,
+      dragMode: 'move',
+      background: false,
+      responsive: true,
+      modal: true,
+    });
+  }
+
+  function closeCropModal() {
+    if (cropper) {
+      cropper.destroy();
+    }
+    document.getElementById('cropModal').classList.add('hidden');
+  }
+
+  function cropImage() {
+    if (!cropper) return;
+
+    const croppedCanvas = cropper.getCroppedCanvas({
+      width: 400,
+      height: 400
+    });
+
+    const croppedImage = document.getElementById(currentImageId);
+    croppedImage.src = croppedCanvas.toDataURL();
+
+    // Store cropped image data in hidden input
+    const modalType = currentImageId.includes('add') ? 'add' : 'edit';
+    document.getElementById(modalType + 'CroppedImage').value = croppedCanvas.toDataURL();
+
+    closeCropModal();
+  }
+
+  function prepareImageSubmit(form, type) {
+    const croppedImageData = document.getElementById(type + 'CroppedImage').value;
+
+    // Create a FormData object
+    const formData = new FormData(form);
+
+    if (croppedImageData) {
+      // Convert base64 to blob
+      const blob = dataURLtoBlob(croppedImageData);
+      // Create a File object and add to form
+      const file = new File([blob], 'cropped_image.png', {
+        type: 'image/png'
+      });
+      formData.set('image', file);
+    }
+
+    // Show loading state
+    Swal.fire({
+      title: 'Processing...',
+      text: 'Please wait while we save the candidate.',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    // Submit form with AJAX
+    fetch(form.action, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: type === 'add' ? 'Candidate added successfully!' : 'Candidate updated successfully!',
+          }).then(() => {
+            window.location.reload();
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: data.message || 'An error occurred while saving the candidate.'
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'An error occurred while saving the candidate. Please try again.'
+        });
+      });
+
+    return false; // Prevent normal form submission
+  }
+
+  function dataURLtoBlob(dataURL) {
+    // Convert base64 to raw binary data held in a string
+    const byteString = atob(dataURL.split(',')[1]);
+
+    // Separate out the mime component
+    const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+
+    // Write the bytes of the string to an ArrayBuffer
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+
+    // Create a blob with the ArrayBuffer
+    return new Blob([ab], {
+      type: mimeString
+    });
   }
   </script>
 </body>

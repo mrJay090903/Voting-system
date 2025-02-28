@@ -15,12 +15,21 @@ $admin_username = $_SESSION['admin_username'];
 // Handle Delete Student
 if (isset($_POST['delete_student'])) {
     $student_id = mysqli_real_escape_string($conn, $_POST['student_id']);
-    $sql = "DELETE FROM students WHERE StudentID = '$student_id'";
-    if ($conn->query($sql) === TRUE) {
-        header("Location: students.php?success=Student successfully deleted");
+    
+    // First delete the student's votes
+    $delete_votes_sql = "DELETE FROM votes WHERE student_id = '$student_id'";
+    if ($conn->query($delete_votes_sql)) {
+        // Then delete the student
+        $delete_student_sql = "DELETE FROM students WHERE StudentID = '$student_id'";
+        if ($conn->query($delete_student_sql)) {
+            header("Location: students.php?success=Student successfully deleted");
+        } else {
+            header("Location: students.php?error=Failed to delete student");
+        }
     } else {
-        header("Location: students.php?error=Failed to delete student");
+        header("Location: students.php?error=Failed to delete student's votes");
     }
+    exit();
 }
 
 // Get all students with pagination and search
@@ -29,7 +38,20 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $start_from = ($page - 1) * $results_per_page;
 
 $search_query = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
-$sql = "SELECT * FROM students WHERE FullName LIKE '%$search_query%' ORDER BY Grade, FullName LIMIT $start_from, $results_per_page";
+$sql = "SELECT * FROM students 
+        WHERE FullName LIKE '%$search_query%' 
+        ORDER BY 
+            CASE 
+                WHEN Grade = 'Grade 7' THEN 1
+                WHEN Grade = 'Grade 8' THEN 2
+                WHEN Grade = 'Grade 9' THEN 3
+                WHEN Grade = 'Grade 10' THEN 4
+                WHEN Grade = 'Grade 11' THEN 5
+                WHEN Grade = 'Grade 12' THEN 6
+                ELSE 7
+            END,
+            FullName 
+        LIMIT $start_from, $results_per_page";
 $students = $conn->query($sql);
 
 // Count total records for pagination
@@ -45,6 +67,7 @@ $total_pages = ceil($total_students / $results_per_page);
 
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Management - Admin Dashboard</title>
   <link rel="icon" href="../components/image/logo.png" type="image/png">
@@ -94,6 +117,14 @@ $total_pages = ceil($total_students / $results_per_page);
         <div class="flex items-center space-x-4">
 
           <div class="flex space-x-4">
+            <button onclick="printStudentsList()"
+              class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600">
+              <i class="fas fa-print mr-2"></i>Print List
+            </button>
+            <button onclick="openDeleteGradeModal()"
+              class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+              <i class="fas fa-trash mr-2"></i>Delete by Grade
+            </button>
             <button onclick="openImportModal()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
               <i class="fas fa-file-import mr-2"></i>Import Students
             </button>
@@ -111,69 +142,78 @@ $total_pages = ceil($total_students / $results_per_page);
         <!-- Search Bar -->
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-2xl font-semibold">Students List</h2>
-          <form action="students.php" method="GET" class="flex space-x-4">
-            <input type="text" name="search" value="<?php echo htmlspecialchars($search_query); ?>"
-              class="border rounded p-2" placeholder="Search students by name...">
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-              <i class="fas fa-search"></i> Search
+          <div class="flex space-x-4 items-center">
+            <input type="text" id="searchInput" class="border rounded p-2" placeholder="Search students by name..."
+              value="<?php echo htmlspecialchars($search_query); ?>">
+            <button onclick="openUpdateGradeModal()"
+              class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">
+              <i class="fas fa-graduation-cap mr-2"></i>Update Grade
             </button>
-          </form>
-        </div>
-
-        <!-- Students Table -->
-        <div class="bg-white rounded-lg shadow-md overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <?php while($student = $students->fetch_assoc()): ?>
-              <tr>
-                <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($student['StudentID']); ?></td>
-                <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($student['FullName']); ?></td>
-                <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($student['Grade']); ?></td>
-                <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($student['Email']); ?></td>
-                <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($student['ContactNumber']); ?></td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <button onclick="openEditModal('<?php echo $student['StudentID']; ?>')"
-                    class="text-blue-600 hover:text-blue-900 mr-3">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button onclick="confirmDelete('<?php echo $student['StudentID']; ?>')"
-                    class="text-red-600 hover:text-red-900">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </td>
-              </tr>
-              <?php endwhile; ?>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination Controls -->
-        <div class="flex justify-between mt-6">
-          <div>
-            <span>Page <?php echo $page; ?> of <?php echo $total_pages; ?></span>
           </div>
-          <div>
-            <a href="students.php?page=<?php echo max(1, $page - 1); ?>&search=<?php echo urlencode($search_query); ?>"
-              class="text-blue-600 hover:text-blue-900">
-              Previous
-            </a>
-            <span class="mx-2">|</span>
-            <a href="students.php?page=<?php echo min($total_pages, $page + 1); ?>&search=<?php echo urlencode($search_query); ?>"
-              class="text-blue-600 hover:text-blue-900">
-              Next
-            </a>
+        </div>
+
+        <!-- Add this div to hold the table content -->
+        <div id="studentsTableContent">
+          <!-- Students Table -->
+          <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <?php while($student = $students->fetch_assoc()): ?>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($student['StudentID']); ?></td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <?php echo htmlspecialchars($student['FullName'], ENT_QUOTES, 'UTF-8'); ?>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($student['Grade']); ?></td>
+                  <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($student['Email']); ?></td>
+                  <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($student['ContactNumber']); ?>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <button onclick="openEditModal('<?php echo $student['StudentID']; ?>')"
+                      class="text-blue-600 hover:text-blue-900 mr-3">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="confirmDelete('<?php echo $student['StudentID']; ?>')"
+                      class="text-red-600 hover:text-red-900">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                <?php endwhile; ?>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Controls -->
+          <div class="flex justify-between mt-6">
+            <div>
+              <span>Page <?php echo $page; ?> of <?php echo $total_pages; ?></span>
+            </div>
+            <div>
+              <a href="students.php?page=<?php echo max(1, $page - 1); ?>&search=<?php echo urlencode($search_query); ?>"
+                class="text-blue-600 hover:text-blue-900">
+                Previous
+              </a>
+              <span class="mx-2">|</span>
+              <a href="students.php?page=<?php echo min($total_pages, $page + 1); ?>&search=<?php echo urlencode($search_query); ?>"
+                class="text-blue-600 hover:text-blue-900">
+                Next
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -310,6 +350,92 @@ $total_pages = ceil($total_students / $results_per_page);
     </div>
   </div>
 
+  <!-- Add this new modal for delete by grade -->
+  <div id="deleteGradeModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div class="mt-3">
+        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Delete Students by Grade</h3>
+        <p class="text-red-600 mb-4">Warning: This action cannot be undone!</p>
+        <form action="actions/delete_by_grade.php" method="POST" onsubmit="return confirmGradeDelete()">
+          <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2">Select Grade</label>
+            <select name="grade" required
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+              <option value="">Select Grade</option>
+              <?php for($i = 7; $i <= 12; $i++): ?>
+              <option value="Grade <?php echo $i; ?>">Grade <?php echo $i; ?></option>
+              <?php endfor; ?>
+            </select>
+          </div>
+          <div class="flex justify-end">
+            <button type="button" onclick="closeDeleteGradeModal()"
+              class="bg-gray-500 text-white px-4 py-2 rounded mr-2">Cancel</button>
+            <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded">Delete</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Grade Modal -->
+  <div id="updateGradeModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div class="mt-3">
+        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Update Student Grade</h3>
+        <form action="actions/update_grade.php" method="POST" onsubmit="return confirmGradeUpdate()">
+          <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2">From Grade</label>
+            <select name="from_grade" required
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+              <option value="">Select Current Grade</option>
+              <?php for($i = 7; $i <= 12; $i++): ?>
+              <option value="Grade <?php echo $i; ?>">Grade <?php echo $i; ?></option>
+              <?php endfor; ?>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2">To Grade</label>
+            <select name="to_grade" required
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+              <option value="">Select New Grade</option>
+              <?php for($i = 7; $i <= 12; $i++): ?>
+              <option value="Grade <?php echo $i; ?>">Grade <?php echo $i; ?></option>
+              <?php endfor; ?>
+            </select>
+          </div>
+          <div class="flex justify-end">
+            <button type="button" onclick="closeUpdateGradeModal()"
+              class="bg-gray-500 text-white px-4 py-2 rounded mr-2">Cancel</button>
+            <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded">Update Grade</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add this hidden print section at the end of the body -->
+  <div id="printSection" class="hidden">
+    <div class="print-header text-center mb-4">
+      <img src="../components/image/logo.png" alt="School Logo" class="mx-auto h-20 mb-2">
+      <h1 class="text-xl font-bold">Student Information System</h1>
+      <p class="text-sm text-gray-600">Generated on: <?php echo date('F d, Y'); ?></p>
+    </div>
+    <table class="w-full border-collapse border">
+      <thead>
+        <tr>
+          <th class="border p-2">Student ID</th>
+          <th class="border p-2">Full Name</th>
+          <th class="border p-2">Grade</th>
+          <th class="border p-2">Email</th>
+          <th class="border p-2">Contact</th>
+        </tr>
+      </thead>
+      <tbody id="printTableBody">
+        <!-- Will be populated by JavaScript -->
+      </tbody>
+    </table>
+  </div>
+
   <script>
   function openAddModal() {
     document.getElementById('addModal').classList.remove('hidden');
@@ -366,6 +492,190 @@ $total_pages = ceil($total_students / $results_per_page);
 
   function closeImportModal() {
     document.getElementById('importModal').classList.add('hidden');
+  }
+
+  function openDeleteGradeModal() {
+    document.getElementById('deleteGradeModal').classList.remove('hidden');
+  }
+
+  function closeDeleteGradeModal() {
+    document.getElementById('deleteGradeModal').classList.add('hidden');
+  }
+
+  function confirmGradeDelete() {
+    const gradeSelect = document.querySelector('#deleteGradeModal select[name="grade"]');
+    const selectedGrade = gradeSelect.value;
+
+    if (!selectedGrade) {
+      alert('Please select a grade');
+      return false;
+    }
+
+    return confirm(`Are you sure you want to delete ALL students from ${selectedGrade}? This action cannot be undone!`);
+  }
+
+  // Add this new function for real-time search
+  let searchTimeout;
+
+  document.getElementById('searchInput').addEventListener('input', function(e) {
+    clearTimeout(searchTimeout);
+
+    searchTimeout = setTimeout(() => {
+      const searchQuery = e.target.value;
+      const currentUrl = new URL(window.location.href);
+
+      // Update search parameter
+      if (searchQuery) {
+        currentUrl.searchParams.set('search', searchQuery);
+      } else {
+        currentUrl.searchParams.delete('search');
+      }
+
+      // Reset to first page when searching
+      currentUrl.searchParams.set('page', '1');
+
+      // Fetch updated results
+      fetch(`${currentUrl.pathname}?${currentUrl.searchParams.toString()}`)
+        .then(response => response.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const newContent = doc.getElementById('studentsTableContent');
+          document.getElementById('studentsTableContent').innerHTML = newContent.innerHTML;
+        })
+        .catch(error => console.error('Error:', error));
+    }, 300); // 300ms delay to prevent too many requests
+  });
+
+  // Update URL without reloading when using pagination
+  document.addEventListener('click', function(e) {
+    if (e.target.matches('.pagination-link')) {
+      e.preventDefault();
+      const url = e.target.href;
+
+      fetch(url)
+        .then(response => response.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const newContent = doc.getElementById('studentsTableContent');
+          document.getElementById('studentsTableContent').innerHTML = newContent.innerHTML;
+
+          // Update URL without page reload
+          window.history.pushState({}, '', url);
+        })
+        .catch(error => console.error('Error:', error));
+    }
+  });
+
+  function printStudentsList() {
+    // Get all student data
+    const searchQuery = document.getElementById('searchInput').value;
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('print', 'true');
+    if (searchQuery) {
+      currentUrl.searchParams.set('search', searchQuery);
+    }
+
+    fetch(`actions/get_all_students.php${currentUrl.search}`)
+      .then(response => response.json())
+      .then(data => {
+        // Populate print table
+        const printTableBody = document.getElementById('printTableBody');
+        printTableBody.innerHTML = '';
+
+        data.forEach(student => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+                    <td class="border p-2">${student.StudentID}</td>
+                    <td class="border p-2">${student.FullName}</td>
+                    <td class="border p-2">${student.Grade}</td>
+                    <td class="border p-2">${student.Email}</td>
+                    <td class="border p-2">${student.ContactNumber}</td>
+                `;
+          printTableBody.appendChild(row);
+        });
+
+        // Print the document
+        const printContent = document.getElementById('printSection').innerHTML;
+        const originalContent = document.body.innerHTML;
+
+        document.body.innerHTML = `
+                <style>
+                    @media print {
+                        @page {
+                            size: landscape;
+                            margin: 1cm;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                        }
+                        th, td {
+                            border: 1px solid #000;
+                            padding: 8px;
+                            text-align: left;
+                        }
+                        .print-header {
+                            text-align: center;
+                            margin-bottom: 20px;
+                        }
+                        .print-header img {
+                            height: 80px;
+                            margin: 0 auto;
+                        }
+                    }
+                </style>
+                ${printContent}
+            `;
+
+        window.print();
+        document.body.innerHTML = originalContent;
+
+        // Reinitialize event listeners
+        initializeEventListeners();
+      })
+      .catch(error => console.error('Error:', error));
+  }
+
+  // Function to reinitialize all event listeners after printing
+  function initializeEventListeners() {
+    // Reinitialize search functionality
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+      // ... existing search code ...
+    });
+
+    // Reinitialize pagination
+    document.addEventListener('click', function(e) {
+      // ... existing pagination code ...
+    });
+
+    // ... reinitialize other event listeners ...
+  }
+
+  function openUpdateGradeModal() {
+    document.getElementById('updateGradeModal').classList.remove('hidden');
+  }
+
+  function closeUpdateGradeModal() {
+    document.getElementById('updateGradeModal').classList.add('hidden');
+  }
+
+  function confirmGradeUpdate() {
+    const fromGrade = document.querySelector('select[name="from_grade"]').value;
+    const toGrade = document.querySelector('select[name="to_grade"]').value;
+
+    if (!fromGrade || !toGrade) {
+      alert('Please select both grades');
+      return false;
+    }
+
+    if (fromGrade === toGrade) {
+      alert('Please select different grades');
+      return false;
+    }
+
+    return confirm(`Are you sure you want to update all students from ${fromGrade} to ${toGrade}?`);
   }
   </script>
 </body>

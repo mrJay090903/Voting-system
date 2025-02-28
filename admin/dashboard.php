@@ -13,18 +13,83 @@ $admin_username = $_SESSION['admin_username'];
 $election_sql = "SELECT id, Status FROM elections WHERE Status IN ('active', 'completed') ORDER BY Status DESC LIMIT 1";
 $election_result = $conn->query($election_sql);
 
-if ($election_result->num_rows > 0) {
-    $election = $election_result->fetch_assoc();
-    $election_id = $election['id']; // Set the election ID
-    $election_status = $election['Status']; // Get the election status
+$has_election = $election_result->num_rows > 0;
 
- 
-} else {
-    // Handle the case where there are no active or completed elections
-    echo "<p>No elections available.</p>";
-    exit();
+$candidate_labels = [];
+$vote_counts = [];
+$backgroundColor = [];
+$positionColors = [
+    'President' => 'rgba(59, 130, 246, 0.8)', // Blue
+    'Vice President' => 'rgba(16, 185, 129, 0.8)', // Green
+    'Secretary' => 'rgba(245, 158, 11, 0.8)', // Yellow
+    'Treasurer' => 'rgba(139, 92, 246, 0.8)', // Purple
+    'Auditor' => 'rgba(239, 68, 68, 0.8)', // Red
+    'PIO' => 'rgba(236, 72, 153, 0.8)', // Pink
+    'Protocol Officer' => 'rgba(14, 165, 233, 0.8)', // Sky Blue
+    'Grade 7 Representative' => 'rgba(168, 85, 247, 0.8)', // Purple
+    'Grade 8 Representative' => 'rgba(251, 146, 60, 0.8)', // Orange
+    'Grade 9 Representative' => 'rgba(34, 197, 94, 0.8)', // Green
+    'Grade 10 Representative' => 'rgba(244, 63, 94, 0.8)', // Rose
+    'Grade 11 Representative' => 'rgba(45, 212, 191, 0.8)', // Teal
+    'Grade 12 Representative' => 'rgba(234, 179, 8, 0.8)', // Yellow
+];
+
+if ($has_election) {
+    $election = $election_result->fetch_assoc();
+    $election_id = $election['id'];
+    $election_status = $election['Status'];
+
+    // Move queries that depend on election_id inside this block
+    // Fetch votes per candidate with positions
+    $votes_per_candidate_sql = "
+        SELECT 
+            c.student_id, 
+            s.FullName AS student_name, 
+            c.position,
+            COUNT(v.id) AS vote_count
+        FROM candidates c
+        LEFT JOIN votes v ON c.id = v.candidate_id
+        JOIN students s ON c.student_id = s.StudentID
+        WHERE c.election_id = '$election_id'
+        GROUP BY c.id
+        ORDER BY c.position, vote_count DESC
+    ";
+    $votes_per_candidate_result = $conn->query($votes_per_candidate_sql);
+
+    // Process the votes per candidate data
+    while ($row = $votes_per_candidate_result->fetch_assoc()) {
+        $candidate_labels[] = $row['student_name'] . ' (' . $row['position'] . ')';
+        $vote_counts[] = $row['vote_count'];
+        $backgroundColor[] = $positionColors[$row['position']] ?? 'rgba(156, 163, 175, 0.8)'; // Default gray if position not found
+    }
+
+    // Add candidate summary query
+    $candidate_summary_sql = "
+        SELECT 
+            c.position,
+            s.FullName,
+            COUNT(v.id) as vote_count,
+            c.partylist_name
+        FROM candidates c
+        LEFT JOIN votes v ON c.id = v.candidate_id
+        JOIN students s ON c.student_id = s.StudentID
+        WHERE c.election_id = '$election_id'
+        GROUP BY c.id
+        ORDER BY c.position, vote_count DESC
+    ";
+    $candidate_summary_result = $conn->query($candidate_summary_sql);
+
+    // Organize candidates by position
+    $positions_summary = [];
+    while ($row = $candidate_summary_result->fetch_assoc()) {
+        if (!isset($positions_summary[$row['position']])) {
+            $positions_summary[$row['position']] = [];
+        }
+        $positions_summary[$row['position']][] = $row;
+    }
 }
-// Get statistics
+
+// Keep queries that don't depend on election_id outside
 $stats = [
     'total_students' => $conn->query("SELECT COUNT(*) as count FROM students")->fetch_assoc()['count'],
     'total_elections' => $conn->query("SELECT COUNT(*) as count FROM elections")->fetch_assoc()['count'],
@@ -38,11 +103,22 @@ $recent_elections = $conn->query("
     SELECT 
         e.*,
         COUNT(DISTINCT c.id) as candidate_count,
-        COUNT(DISTINCT v.id) as vote_count,
-        (SELECT COUNT(*) FROM students) as total_students
+        (
+            SELECT COUNT(DISTINCT v.student_id) 
+            FROM votes v 
+            WHERE v.election_id = e.id
+        ) as vote_count,
+        (SELECT COUNT(*) FROM students) as total_students,
+        ROUND(
+            (
+                (SELECT COUNT(DISTINCT v.student_id) 
+                 FROM votes v 
+                 WHERE v.election_id = e.id) * 100.0 / 
+                (SELECT COUNT(*) FROM students)
+            ), 1
+        ) as participation_rate
     FROM elections e
     LEFT JOIN candidates c ON e.id = c.election_id
-    LEFT JOIN votes v ON e.id = v.election_id
     GROUP BY e.id
     ORDER BY e.created_at DESC
     LIMIT 5
@@ -77,48 +153,6 @@ $partylist_stats = $conn->query("
     GROUP BY partylist_name
     ORDER BY candidate_count DESC
 ");
-
-// Fetch votes per candidate with positions
-$votes_per_candidate_sql = "
-    SELECT 
-        c.student_id, 
-        s.FullName AS student_name, 
-        c.position,
-        COUNT(v.id) AS vote_count
-    FROM candidates c
-    LEFT JOIN votes v ON c.id = v.candidate_id
-    JOIN students s ON c.student_id = s.StudentID
-    WHERE c.election_id = '$election_id'
-    GROUP BY c.id
-    ORDER BY c.position, vote_count DESC
-";
-
-$votes_per_candidate_result = $conn->query($votes_per_candidate_sql);
-
-$candidate_labels = [];
-$vote_counts = [];
-$backgroundColor = [];
-$positionColors = [
-    'President' => 'rgba(59, 130, 246, 0.8)', // Blue
-    'Vice President' => 'rgba(16, 185, 129, 0.8)', // Green
-    'Secretary' => 'rgba(245, 158, 11, 0.8)', // Yellow
-    'Treasurer' => 'rgba(139, 92, 246, 0.8)', // Purple
-    'Auditor' => 'rgba(239, 68, 68, 0.8)', // Red
-    'PIO' => 'rgba(236, 72, 153, 0.8)', // Pink
-    'Protocol Officer' => 'rgba(14, 165, 233, 0.8)', // Sky Blue
-    'Grade 7 Representative' => 'rgba(168, 85, 247, 0.8)', // Purple
-    'Grade 8 Representative' => 'rgba(251, 146, 60, 0.8)', // Orange
-    'Grade 9 Representative' => 'rgba(34, 197, 94, 0.8)', // Green
-    'Grade 10 Representative' => 'rgba(244, 63, 94, 0.8)', // Rose
-    'Grade 11 Representative' => 'rgba(45, 212, 191, 0.8)', // Teal
-    'Grade 12 Representative' => 'rgba(234, 179, 8, 0.8)', // Yellow
-];
-
-while ($row = $votes_per_candidate_result->fetch_assoc()) {
-    $candidate_labels[] = $row['student_name'] . ' (' . $row['position'] . ')';
-    $vote_counts[] = $row['vote_count'];
-    $backgroundColor[] = $positionColors[$row['position']] ?? 'rgba(156, 163, 175, 0.8)'; // Default gray if position not found
-}
 
 // Get total students
 $total_students_sql = "SELECT COUNT(*) as total FROM students";
@@ -162,31 +196,6 @@ while ($trend = $election_trends_result->fetch_assoc()) {
         : 0;
     $participation_rates[] = $participation_rate;
 }
-
-// Add this query after the existing queries
-$candidate_summary_sql = "
-    SELECT 
-        c.position,
-        s.FullName,
-        COUNT(v.id) as vote_count,
-        c.partylist_name
-    FROM candidates c
-    LEFT JOIN votes v ON c.id = v.candidate_id
-    JOIN students s ON c.student_id = s.StudentID
-    WHERE c.election_id = '$election_id'
-    GROUP BY c.id
-    ORDER BY c.position, vote_count DESC
-";
-$candidate_summary_result = $conn->query($candidate_summary_sql);
-
-// Organize candidates by position
-$positions_summary = [];
-while ($row = $candidate_summary_result->fetch_assoc()) {
-    if (!isset($positions_summary[$row['position']])) {
-        $positions_summary[$row['position']] = [];
-    }
-    $positions_summary[$row['position']][] = $row;
-}
 ?>
 
 <!DOCTYPE html>
@@ -221,6 +230,19 @@ while ($row = $candidate_summary_result->fetch_assoc()) {
         </div>
       </div>
 
+      <?php if (!$has_election): ?>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+          <i class="fas fa-info-circle text-4xl text-blue-500 mb-4"></i>
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">No Elections Available</h2>
+          <p class="text-gray-600">There are currently no active or completed elections to display.</p>
+          <a href="elections.php"
+            class="mt-4 inline-block bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition duration-150">
+            Create New Election
+          </a>
+        </div>
+      </div>
+      <?php else: ?>
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
@@ -280,11 +302,20 @@ while ($row = $candidate_summary_result->fetch_assoc()) {
             class="bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition duration-200">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium opacity-80">Total Votes</p>
-                <h3 class="text-3xl font-bold mt-1"><?php echo $stats['total_votes']; ?></h3>
+                <p class="text-sm font-medium opacity-80">Students Voted</p>
+                <?php 
+                    $voted_students_sql = "SELECT COUNT(DISTINCT student_id) as count FROM votes";
+                    $voted_students = $conn->query($voted_students_sql)->fetch_assoc()['count'];
+                    $total_students = $stats['total_students'];
+                    $percentage = round(($voted_students / $total_students) * 100, 1);
+                    ?>
+                <h3 class="text-3xl font-bold mt-1"><?php echo $voted_students; ?></h3>
+                <p class="text-xs mt-1 opacity-80">
+                  <?php echo $percentage; ?>% of total students
+                </p>
               </div>
               <div class="bg-rose-400 bg-opacity-30 p-3 rounded-lg">
-                <i class="fas fa-check-circle text-2xl"></i>
+                <i class="fas fa-users-check text-2xl"></i>
               </div>
             </div>
           </div>
@@ -392,10 +423,7 @@ while ($row = $candidate_summary_result->fetch_assoc()) {
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <?php 
-                    $participation = $election['total_students'] > 0 
-                        ? round(($election['vote_count'] / $election['total_students']) * 100) 
-                        : 0;
-                    echo $participation . '%';
+                    echo number_format($election['participation_rate'], 1) . '%';
                     ?>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -408,9 +436,11 @@ while ($row = $candidate_summary_result->fetch_assoc()) {
           </div>
         </div>
       </div>
+      <?php endif; ?>
     </div>
   </div>
 
+  <?php if ($has_election): ?>
   <script>
   // Update chart configurations
   Chart.defaults.font.family = "'Inter', 'system-ui', '-apple-system', 'sans-serif'";
@@ -595,6 +625,7 @@ while ($row = $candidate_summary_result->fetch_assoc()) {
     }
   });
   </script>
+  <?php endif; ?>
 </body>
 
 </html>

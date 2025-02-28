@@ -11,11 +11,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $student_id = mysqli_real_escape_string($conn, $_POST['student_id']);
     $full_name = mysqli_real_escape_string($conn, $_POST['full_name']);
     $grade = mysqli_real_escape_string($conn, $_POST['grade']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $contact_number = mysqli_real_escape_string($conn, $_POST['contact_number']);
+    
+    // Accept N/A for email and contact number
+    $email = $_POST['email'] === 'N/A' ? 'N/A' : mysqli_real_escape_string($conn, $_POST['email']);
+    $contact_number = $_POST['contact_number'] === 'N/A' ? 'N/A' : mysqli_real_escape_string($conn, $_POST['contact_number']);
 
-    // Check if student already exists
-    $check_sql = "SELECT * FROM students WHERE StudentID = '$student_id' OR Email = '$email'";
+    // Check if student already exists - modified to handle N/A emails
+    $check_sql = "SELECT * FROM students WHERE StudentID = '$student_id'";
+    if ($email !== 'N/A') {
+        $check_sql .= " OR Email = '$email'";
+    }
     $check_result = $conn->query($check_sql);
 
     if ($check_result->num_rows > 0) {

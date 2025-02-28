@@ -64,9 +64,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // TODO: Add logic to update vote count if necessary
 
     if ($conn->query($sql) === TRUE) {
-        header("Location: ../candidates.php?success=Candidate updated successfully");
+        echo json_encode(['success' => true]);
     } else {
-        header("Location: ../candidates.php?error=Failed to update candidate: " . $conn->error);
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Failed to update candidate'
+        ]);
     }
 }
 ?>

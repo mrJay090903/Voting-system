@@ -116,7 +116,12 @@ $elections = $conn->query("
                   <?php echo $election['vote_count']; ?>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <?php echo $election['total_students'] > 0 ? round(($election['vote_count'] / $election['total_students']) * 100) : 0; ?>%
+                  <?php 
+                      $participation = $election['total_students'] > 0 
+                          ? min(100, round(($election['vote_count'] / $election['total_students']) * 100)) 
+                          : 0;
+                      echo $participation;
+                  ?>%
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <?php echo date('M d, Y h:i A', strtotime($election['start_date'])); ?>
