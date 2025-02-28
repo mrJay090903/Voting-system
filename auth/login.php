@@ -1,11 +1,16 @@
 <?php
 session_start();
 include '../database/db.php';
+<<<<<<< HEAD
 $conn = connect(); // Using PDO connection
+=======
+
+>>>>>>> cope/main
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user_type = $_POST['user_type'];
 
     if ($user_type === 'student') {
+<<<<<<< HEAD
         // Student Login - removed full name requirement
         $student_id = mysqli_real_escape_string($conn, $_POST['student_id']);
         $sql = "SELECT * FROM students WHERE StudentID = '$student_id'";
@@ -33,6 +38,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             exit();
         } else {
             header("Location: ../index.php?error=Login failed! Invalid student ID");
+=======
+        // Student Login
+        $student_id = mysqli_real_escape_string($conn, $_POST['student_id']);
+        $full_name = mysqli_real_escape_string($conn, $_POST['full_name']); // Changed from email to full_name
+
+        $sql = "SELECT * FROM students WHERE StudentID = '$student_id' AND FullName = '$full_name'"; // Changed Email to FullName
+        $result = $conn->query($sql);
+
+        if ($result->num_rows == 1) {
+            $row = $result->fetch_assoc();
+            $_SESSION['user_type'] = 'student';
+            $_SESSION['student_id'] = $row['StudentID'];
+            $_SESSION['full_name'] = $row['FullName'];
+            header("Location: ../dashboard.php?success=Login successful! Welcome back " . $row['FullName']);
+            exit();
+        } else {
+            header("Location: ../index.php?error=Login failed! Invalid student ID or full name combination"); // Updated error message
+>>>>>>> cope/main
             exit();
         }
     } else {

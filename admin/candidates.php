@@ -10,7 +10,16 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
 
 $admin_username = $_SESSION['admin_username'];
 
+<<<<<<< HEAD
 // Get all candidates with student, election, and partylist details
+=======
+// Get all candidates with student, election, and partylist details, including vote counts
+$search_query = '';
+if (isset($_POST['search'])) {
+    $search_query = mysqli_real_escape_string($conn, $_POST['search_query']);
+}
+
+>>>>>>> cope/main
 $candidates = $conn->query("
     SELECT 
         c.*,
@@ -20,18 +29,28 @@ $candidates = $conn->query("
         e.status as election_status,
         COALESCE(p.name, 'Independent') as partylist_name,
         p.logo_url as partylist_logo,
+<<<<<<< HEAD
         COUNT(v.id) as votes
+=======
+        COUNT(v.id) as vote_count
+>>>>>>> cope/main
     FROM candidates c 
     JOIN students s ON c.student_id = s.StudentID 
     JOIN elections e ON c.election_id = e.id 
     LEFT JOIN partylists p ON c.partylist_name = p.name
     LEFT JOIN votes v ON c.id = v.candidate_id
+<<<<<<< HEAD
     GROUP BY c.id, s.FullName, s.Grade, e.title, e.status, p.name, p.logo_url
     ORDER BY 
         FIELD(c.position, 'President', 'Vice President', 'Secretary', 'Treasurer', 'Auditor', 'PIO', 'Protocol Officer', 
         'Grade 7 Representative', 'Grade 8 Representative', 'Grade 9 Representative', 'Grade 10 Representative', 
         'Grade 11 Representative', 'Grade 12 Representative'),
         e.title, c.candidate_type DESC, c.position, c.partylist_name
+=======
+    WHERE s.FullName LIKE '%$search_query%' OR c.position LIKE '%$search_query%'
+    GROUP BY c.id
+    ORDER BY e.title, c.candidate_type DESC, c.position, c.partylist_name
+>>>>>>> cope/main
 ");
 
 // Get all active partylists for the dropdown
@@ -63,6 +82,7 @@ $update_status_sql = "
         END
 ";
 $conn->query($update_status_sql);
+<<<<<<< HEAD
 
 // Get elections with additional information
 $elections = $conn->query("
@@ -83,6 +103,8 @@ $elections = $conn->query("
         END,
         e.start_date DESC
 ");
+=======
+>>>>>>> cope/main
 ?>
 
 <!DOCTYPE html>
@@ -94,6 +116,7 @@ $elections = $conn->query("
   <title>Candidates Management - Admin Dashboard</title>
   <link rel="icon" href="../components/image/logo.png" type="image/png">
   <script src="https://cdn.tailwindcss.com"></script>
+<<<<<<< HEAD
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
@@ -111,11 +134,26 @@ $elections = $conn->query("
     <div class="sticky top-0 h-screen  ">
       <?php include '../components/admin_sidebar.php'; ?>
     </div>
+=======
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-gray-100">
+
+
+  <div class="flex">
+    <!-- Include Sidebar -->
+    <?php include '../components/admin_sidebar.php'; ?>
+>>>>>>> cope/main
 
     <!-- Main Content -->
     <div class="flex-1">
       <!-- Top Navigation -->
+<<<<<<< HEAD
       <div class="bg-white shadow-md px-6 py-4 flex justify-between items-center sticky top-0">
+=======
+      <div class="bg-white shadow-md px-6 py-4 flex justify-between items-center">
+>>>>>>> cope/main
         <h1 class="text-xl font-semibold">Candidates Management</h1>
         <div class="flex items-center space-x-4">
           <button onclick="openAddModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
@@ -129,6 +167,13 @@ $elections = $conn->query("
       <!-- Candidates List -->
       <div class="p-6">
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
+<<<<<<< HEAD
+=======
+          <div class="flex justify-between items-center ">
+
+
+          </div>
+>>>>>>> cope/main
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
@@ -152,27 +197,43 @@ $elections = $conn->query("
                   <?php echo htmlspecialchars($candidate['position']); ?>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
+<<<<<<< HEAD
                   <?php echo htmlspecialchars($candidate['votes']); ?>
+=======
+                  <?php echo htmlspecialchars($candidate['vote_count']); ?>
+>>>>>>> cope/main
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button onclick="openEditModal(<?php echo $candidate['id']; ?>)"
                     class="text-blue-600 hover:text-blue-900 mr-3">
                     <i class="fas fa-edit"></i>
                   </button>
+<<<<<<< HEAD
                   <button
                     onclick="confirmDelete(<?php echo htmlspecialchars($candidate['id'], ENT_QUOTES, 'UTF-8'); ?>)"
                     class="text-red-600 hover:text-red-900">
                     <i class="fas fa-trash"></i>
                   </button>
 
+=======
+                  <button onclick="confirmDelete(<?php echo $candidate['id']; ?>)"
+                    class="text-red-600 hover:text-red-900">
+                    <i class="fas fa-trash"></i>
+                  </button>
+>>>>>>> cope/main
                 </td>
               </tr>
               <?php endwhile; ?>
             </tbody>
           </table>
         </div>
+<<<<<<< HEAD
 
 
+=======
+      </div>
+      <div class="p-6">
+>>>>>>> cope/main
         <!-- Partylist Management Section -->
         <div class="mt-8">
           <div class="flex justify-between items-center mb-6">
@@ -184,7 +245,12 @@ $elections = $conn->query("
           </div>
 
           <!-- Partylists Table -->
+<<<<<<< HEAD
           <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+=======
+
+          <div class="bg-white rounded-lg shadow-md overflow-x-auto ">
+>>>>>>> cope/main
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
@@ -321,6 +387,7 @@ $elections = $conn->query("
         </div>
       </div>
     </div>
+<<<<<<< HEAD
   </div>
 
   <!-- Add Candidate Modal -->
@@ -342,11 +409,33 @@ $elections = $conn->query("
                 class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 <option value="">Select Election</option>
                 <?php
+=======
+
+    <!-- Add Candidate Modal -->
+    <div id="addModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+      <div class="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Add New Candidate</h3>
+            <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-500">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <form action="actions/add_candidate.php" method="POST" enctype="multipart/form-data">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Election</label>
+                <select name="election_id" required
+                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                  <option value="">Select Election</option>
+                  <?php
+>>>>>>> cope/main
                             $elections = $conn->query("SELECT * FROM elections WHERE status != 'completed' ORDER BY title");
                             while($election = $elections->fetch_assoc()) {
                                 echo "<option value='" . $election['id'] . "'>" . htmlspecialchars($election['title']) . "</option>";
                             }
                             ?>
+<<<<<<< HEAD
               </select>
             </div>
 
@@ -356,11 +445,23 @@ $elections = $conn->query("
                 class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 <option value="">Select Student</option>
                 <?php
+=======
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Student</label>
+                <select name="student_id" required
+                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                  <option value="">Select Student</option>
+                  <?php
+>>>>>>> cope/main
                             $students = $conn->query("SELECT * FROM students ORDER BY FullName");
                             while($student = $students->fetch_assoc()) {
                                 echo "<option value='" . $student['StudentID'] . "'>" . htmlspecialchars($student['FullName']) . "</option>";
                             }
                             ?>
+<<<<<<< HEAD
               </select>
             </div>
 
@@ -611,12 +712,202 @@ $elections = $conn->query("
           }
         });
 
+=======
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Position</label>
+                <select name="position" required
+                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                  <option value="">Select Position</option>
+                  <option value="President">President</option>
+                  <option value="Vice President">Vice President</option>
+                  <option value="Secretary">Secretary</option>
+                  <option value="Treasurer">Treasurer</option>
+                  <option value="Auditor">Auditor</option>
+                  <option value="PIO">PIO</option>
+                  <option value="Protocol Officer">Protocol Officer</option>
+                  <option value="Grade 7 Representative">Grade 7 Representative</option>
+                  <option value="Grade 8 Representative">Grade 8 Representative</option>
+                  <option value="Grade 9 Representative">Grade 9 Representative</option>
+                  <option value="Grade 10 Representative">Grade 10 Representative</option>
+                  <option value="Grade 11 Representative">Grade 11 Representative</option>
+                  <option value="Grade 12 Representative">Grade 12 Representative</option>
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Candidate Type</label>
+                <select name="candidate_type" required onchange="togglePartylist(this.value, 'add')"
+                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                  <option value="independent">Independent</option>
+                  <option value="partylist">Partylist</option>
+                </select>
+              </div>
+
+              <div id="addPartylistField" class="mb-4 hidden">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Partylist</label>
+                <select name="partylist_name"
+                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                  <option value="">Select Partylist</option>
+                  <?php 
+                            $partylists->data_seek(0);
+                            while($partylist = $partylists->fetch_assoc()): 
+                            ?>
+                  <option value="<?php echo htmlspecialchars($partylist['name']); ?>">
+                    <?php echo htmlspecialchars($partylist['name']); ?>
+                  </option>
+                  <?php endwhile; ?>
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Photo</label>
+                <input type="file" name="image" accept="image/*"
+                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2">Platform</label>
+              <textarea name="platform" required rows="3"
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Vision</label>
+                <textarea name="vision" required rows="3"
+                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+              </div>
+
+              <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Mission</label>
+                <textarea name="mission" required rows="3"
+                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+              </div>
+            </div>
+
+            <div class="flex justify-end">
+              <button type="button" onclick="closeAddModal()"
+                class="bg-gray-500 text-white px-4 py-2 rounded mr-2">Cancel</button>
+              <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Candidate</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Candidate Modal -->
+    <div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+      <div class="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Edit Candidate</h3>
+            <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-500">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <form action="actions/edit_candidate.php" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="candidate_id" id="edit_candidate_id">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Position</label>
+                <select name="position" id="edit_position" required
+                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                  <option value="President">President</option>
+                  <option value="Vice President">Vice President</option>
+                  <option value="Secretary">Secretary</option>
+                  <option value="Treasurer">Treasurer</option>
+                  <option value="Auditor">Auditor</option>
+                  <option value="PIO">PIO</option>
+                  <option value="Protocol Officer">Protocol Officer</option>
+                  <option value="Grade 7 Representative">Grade 7 Representative</option>
+                  <option value="Grade 8 Representative">Grade 8 Representative</option>
+                  <option value="Grade 9 Representative">Grade 9 Representative</option>
+                  <option value="Grade 10 Representative">Grade 10 Representative</option>
+                  <option value="Grade 11 Representative">Grade 11 Representative</option>
+                  <option value="Grade 12 Representative">Grade 12 Representative</option>
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Candidate Type</label>
+                <select name="candidate_type" id="edit_candidate_type" required
+                  onchange="togglePartylist(this.value, 'edit')"
+                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                  <option value="independent">Independent</option>
+                  <option value="partylist">Partylist</option>
+                </select>
+              </div>
+
+              <div id="editPartylistField" class="mb-4 hidden">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Partylist</label>
+                <select name="partylist_name" id="edit_partylist_name"
+                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                  <option value="">Select Partylist</option>
+                  <?php 
+                            $partylists->data_seek(0);
+                            while($partylist = $partylists->fetch_assoc()): 
+                            ?>
+                  <option value="<?php echo htmlspecialchars($partylist['name']); ?>">
+                    <?php echo htmlspecialchars($partylist['name']); ?>
+                  </option>
+                  <?php endwhile; ?>
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Photo</label>
+                <input type="file" name="image" accept="image/*"
+                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <div id="current_image" class="mt-2"></div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="block text-gray-700 text-sm font-bold mb-2">Platform</label>
+              <textarea name="platform" id="edit_platform" required rows="3"
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Vision</label>
+                <textarea name="vision" id="edit_vision" required rows="3"
+                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+              </div>
+
+              <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Mission</label>
+                <textarea name="mission" id="edit_mission" required rows="3"
+                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+              </div>
+            </div>
+
+            <div class="flex justify-end">
+              <button type="button" onclick="closeEditModal()"
+                class="bg-gray-500 text-white px-4 py-2 rounded mr-2">Cancel</button>
+              <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Update Candidate</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    function confirmDelete(candidateId) {
+      if (confirm('Are you sure you want to remove this candidate? This action cannot be undone.')) {
+        // Add error handling and feedback
+>>>>>>> cope/main
         fetch(`actions/delete_candidate.php?id=${candidateId}`, {
             method: 'GET'
           })
           .then(response => response.json())
           .then(data => {
             if (data.success) {
+<<<<<<< HEAD
               Swal.fire({
                 title: "Deleted!",
                 text: "Candidate deleted successfully.",
@@ -900,6 +1191,112 @@ $elections = $conn->query("
     });
   }
   </script>
+=======
+              alert('Candidate deleted successfully');
+              window.location.reload();
+            } else {
+              alert('Error deleting candidate: ' + data.message);
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting candidate. Please try again.');
+          });
+      }
+    }
+
+    function openAddModal() {
+      document.getElementById('addModal').classList.remove('hidden');
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.add('hidden');
+    }
+
+    function openEditModal(candidateId) {
+      fetch(`actions/get_candidate.php?id=${candidateId}`)
+        .then(response => response.json())
+        .then(candidate => {
+          document.getElementById('edit_candidate_id').value = candidate.id;
+          document.getElementById('edit_position').value = candidate.position;
+          document.getElementById('edit_candidate_type').value = candidate.candidate_type;
+          document.getElementById('edit_platform').value = candidate.platform;
+          document.getElementById('edit_vision').value = candidate.vision;
+          document.getElementById('edit_mission').value = candidate.mission;
+
+          togglePartylist(candidate.candidate_type, 'edit');
+          if (candidate.candidate_type === 'partylist') {
+            document.getElementById('edit_partylist_name').value = candidate.partylist_name;
+          }
+
+          if (candidate.image_url) {
+            document.getElementById('current_image').innerHTML = `
+                    <img src="../${candidate.image_url}" class="h-20 w-20 object-cover rounded">
+                `;
+          }
+
+          document.getElementById('editModal').classList.remove('hidden');
+        });
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.add('hidden');
+    }
+
+    function togglePartylist(type, mode) {
+      const partylistField = document.getElementById(mode + 'PartylistField');
+      const partylistSelect = partylistField.querySelector('select');
+
+      if (type === 'partylist') {
+        partylistField.classList.remove('hidden');
+        partylistSelect.required = true;
+      } else {
+        partylistField.classList.add('hidden');
+        partylistSelect.required = false;
+        partylistSelect.value = '';
+      }
+    }
+
+    function openPartylistModal() {
+      document.getElementById('partylistModal').classList.remove('hidden');
+    }
+
+    function closePartylistModal() {
+      document.getElementById('partylistModal').classList.add('hidden');
+    }
+
+    function confirmDeletePartylist(partylistId) {
+      if (confirm('Are you sure you want to delete this partylist?')) {
+        window.location.href = `actions/delete_partylist.php?id=${partylistId}`;
+      }
+    }
+
+    function openEditPartylistModal(partylistId) {
+      fetch(`actions/get_partylist.php?id=${partylistId}`)
+        .then(response => response.json())
+        .then(partylist => {
+          document.getElementById('edit_partylist_id').value = partylist.id;
+          document.getElementById('edit_partylist_name').value = partylist.name;
+          document.getElementById('edit_partylist_description').value = partylist.description;
+          document.getElementById('edit_partylist_status').value = partylist.status;
+
+          if (partylist.logo_url) {
+            document.getElementById('current_logo').innerHTML = `
+                      <img src="../${partylist.logo_url}" class="h-20 w-20 object-cover rounded mt-2">
+                  `;
+          } else {
+            document.getElementById('current_logo').innerHTML = '';
+          }
+
+          document.getElementById('editPartylistModal').classList.remove('hidden');
+        });
+    }
+
+    function closeEditPartylistModal() {
+      document.getElementById('editPartylistModal').classList.add('hidden');
+    }
+    </script>
+>>>>>>> cope/main
 </body>
 
 </html>

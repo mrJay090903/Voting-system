@@ -2211,6 +2211,7 @@
             "install-path": "../symfony/translation-contracts"
         },
         {
+<<<<<<< HEAD
             "name": "tecnickcom/tcpdf",
             "version": "6.8.2",
             "version_normalized": "6.8.2.0",
@@ -2287,6 +2288,8 @@
             "install-path": "../tecnickcom/tcpdf"
         },
         {
+=======
+>>>>>>> cope/main
             "name": "voku/portable-ascii",
             "version": "2.0.3",
             "version_normalized": "2.0.3.0",

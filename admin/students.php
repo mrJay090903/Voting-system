@@ -2,7 +2,10 @@
 session_start();
 include '../database/db.php';
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> cope/main
 // Check if user is logged in as admin
 if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
     header("Location: ../index.php");
@@ -14,6 +17,7 @@ $admin_username = $_SESSION['admin_username'];
 // Handle Delete Student
 if (isset($_POST['delete_student'])) {
     $student_id = mysqli_real_escape_string($conn, $_POST['student_id']);
+<<<<<<< HEAD
     
     // First delete the student's votes
     $delete_votes_sql = "DELETE FROM votes WHERE student_id = '$student_id'";
@@ -59,6 +63,39 @@ $total_students_row = $total_students_result->fetch_assoc();
 $total_students = $total_students_row['total'];
 
 $total_pages = ceil($total_students / $results_per_page);
+=======
+    $sql = "DELETE FROM students WHERE StudentID = '$student_id'";
+    if ($conn->query($sql) === TRUE) {
+        header("Location: students.php?success=Student successfully deleted");
+    } else {
+        header("Location: students.php?error=Failed to delete student");
+    }
+}
+
+// Handle Search
+$search_query = '';
+if (isset($_POST['search'])) {
+    $search_query = mysqli_real_escape_string($conn, $_POST['search_query']);
+}
+
+// Pagination logic
+$limit = 10; // Number of results per page
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $limit;
+
+// Get all students with optional search and pagination
+$students = $conn->query("
+    SELECT * FROM students 
+    WHERE FullName LIKE '%$search_query%' OR StudentID LIKE '%$search_query%'
+    ORDER BY Grade, FullName
+    LIMIT $limit OFFSET $offset
+");
+
+// Get total number of students for pagination
+$total_students_result = $conn->query("SELECT COUNT(*) as total FROM students WHERE FullName LIKE '%$search_query%' OR StudentID LIKE '%$search_query%'");
+$total_students = $total_students_result->fetch_assoc()['total'];
+$total_pages = ceil($total_students / $limit);
+>>>>>>> cope/main
 ?>
 
 <!DOCTYPE html>
@@ -66,7 +103,10 @@ $total_pages = ceil($total_students / $results_per_page);
 
 <head>
   <meta charset="UTF-8">
+<<<<<<< HEAD
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+=======
+>>>>>>> cope/main
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Management - Admin Dashboard</title>
   <link rel="icon" href="../components/image/logo.png" type="image/png">
@@ -75,6 +115,7 @@ $total_pages = ceil($total_students / $results_per_page);
 </head>
 
 <body class="bg-gray-100">
+<<<<<<< HEAD
   <?php include '../components/notification.php';
     if (isset($_GET['success'])) echo showNotification($_GET['success']);
     if (isset($_GET['error'])) echo showNotification($_GET['error'], 'error');
@@ -131,6 +172,28 @@ $total_pages = ceil($total_students / $results_per_page);
               <i class="fas fa-plus mr-2"></i>Add Student
             </button>
           </div>
+=======
+
+
+
+
+  <div class="flex">
+
+    <?php include '../components/admin_sidebar.php'; ?>
+    <!-- Main Content -->
+    <div class="flex-1">
+      <!-- Top Navigation -->
+      <div class="bg-white shadow-md px-6 py-4 flex justify-between items-center">
+        <h1 class="text-xl font-semibold">Student Management</h1>
+        <div class="flex items-center space-x-4">
+          <button onclick="openImportModal()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
+            <i class="fas fa-file-import mr-2"></i>Import Students
+          </button>
+          <button onclick="openAddModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+            <i class="fas fa-plus mr-2"></i>Add Student
+          </button>
+
+>>>>>>> cope/main
           <span class="text-gray-600">Welcome, <?php echo htmlspecialchars($admin_username); ?></span>
           <a href="../auth/logout.php" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Logout</a>
         </div>
@@ -138,6 +201,7 @@ $total_pages = ceil($total_students / $results_per_page);
 
       <!-- Content -->
       <div class="p-6">
+<<<<<<< HEAD
         <!-- Search Bar -->
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-2xl font-semibold">Students List</h2>
@@ -213,6 +277,61 @@ $total_pages = ceil($total_students / $results_per_page);
                 Next
               </a>
             </div>
+=======
+        <div class="flex justify-end">
+          <form method="POST" class="flex space-x-4">
+            <input type="text" name="search_query" value="<?php echo htmlspecialchars($search_query); ?>"
+              placeholder="Search students by name" class="border rounded px-4 py-2">
+            <button type="submit" name="search"
+              class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">Search</button>
+          </form>
+        </div>
+        <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <?php while($student = $students->fetch_assoc()): ?>
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($student['StudentID']); ?></td>
+                <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($student['FullName']); ?></td>
+                <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($student['Grade']); ?></td>
+                <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($student['Email']); ?></td>
+                <td class="px-6 py-4 whitespace-nowrap"><?php echo htmlspecialchars($student['ContactNumber']); ?></td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <button onclick="openEditModal('<?php echo $student['StudentID']; ?>')"
+                    class="text-blue-600 hover:text-blue-900 mr-3">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button onclick="confirmDelete('<?php echo $student['StudentID']; ?>')"
+                    class="text-red-600 hover:text-red-900">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <?php endwhile; ?>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="flex justify-between mt-4">
+          <span class="text-gray-700">Page <?php echo $page; ?> of <?php echo $total_pages; ?></span>
+          <div>
+            <a href="?page=<?php echo max(1, $page - 1); ?>" class="text-blue-600 hover:underline">Previous</a>
+            <span class="mx-2">|</span>
+            <a href="?page=<?php echo min($total_pages, $page + 1); ?>" class="text-blue-600 hover:underline">Next</a>
+>>>>>>> cope/main
           </div>
         </div>
       </div>
@@ -335,9 +454,14 @@ $total_pages = ceil($total_students / $results_per_page);
               <li>Email</li>
               <li>Contact Number</li>
             </ul>
+<<<<<<< HEAD
             <a href="../admin/templates/student_template.csv" class="text-blue-600 hover:underline block mt-2">
               Download CSV Template
             </a>
+=======
+            <a href="../admin/templates/student_template.csv" class="text-blue-600 hover:underline block mt-2">Download
+              CSV Template</a>
+>>>>>>> cope/main
           </div>
           <div class="flex justify-end">
             <button type="button" onclick="closeImportModal()"
@@ -349,6 +473,7 @@ $total_pages = ceil($total_students / $results_per_page);
     </div>
   </div>
 
+<<<<<<< HEAD
   <!-- Add this new modal for delete by grade -->
   <div id="deleteGradeModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -435,6 +560,8 @@ $total_pages = ceil($total_students / $results_per_page);
     </table>
   </div>
 
+=======
+>>>>>>> cope/main
   <script>
   function openAddModal() {
     document.getElementById('addModal').classList.remove('hidden');
@@ -468,6 +595,10 @@ $total_pages = ceil($total_students / $results_per_page);
   }
 
   function openEditModal(studentId) {
+<<<<<<< HEAD
+=======
+    // Fetch student data using AJAX
+>>>>>>> cope/main
     fetch(`actions/get_student.php?student_id=${studentId}`)
       .then(response => response.json())
       .then(student => {
@@ -492,6 +623,7 @@ $total_pages = ceil($total_students / $results_per_page);
   function closeImportModal() {
     document.getElementById('importModal').classList.add('hidden');
   }
+<<<<<<< HEAD
 
   function openDeleteGradeModal() {
     document.getElementById('deleteGradeModal').classList.remove('hidden');
@@ -676,6 +808,8 @@ $total_pages = ceil($total_students / $results_per_page);
 
     return confirm(`Are you sure you want to update all students from ${fromGrade} to ${toGrade}?`);
   }
+=======
+>>>>>>> cope/main
   </script>
 </body>
 

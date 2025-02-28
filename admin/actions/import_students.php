@@ -19,12 +19,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['file'])) {
         $errors = [];
         
         if (($handle = fopen($file, "r")) !== FALSE) {
+<<<<<<< HEAD
             // Set UTF-8 encoding for proper handling of special characters
             setlocale(LC_ALL, 'en_US.UTF-8');
             
             // Set the input encoding
             mb_internal_encoding('UTF-8');
             
+=======
+>>>>>>> cope/main
             // Skip header row
             fgetcsv($handle);
             
@@ -35,6 +38,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['file'])) {
                     continue;
                 }
                 
+<<<<<<< HEAD
                 // Get and clean student ID first
                 $student_id = trim($row[0]);
                 
@@ -118,6 +122,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['file'])) {
                 if ($email !== 'N/A') {
                     $check_sql .= " OR Email = '$email'";
                 }
+=======
+                $student_id = mysqli_real_escape_string($conn, trim($row[0]));
+                $full_name = mysqli_real_escape_string($conn, trim($row[1]));
+                $grade = mysqli_real_escape_string($conn, trim($row[2]));
+                $email = mysqli_real_escape_string($conn, trim($row[3]));
+                $contact_number = mysqli_real_escape_string($conn, trim($row[4]));
+                
+                // Skip empty rows
+                if (empty($student_id)) continue;
+                
+                // Check if student already exists
+                $check_sql = "SELECT StudentID FROM students WHERE StudentID = '$student_id' OR Email = '$email'";
+>>>>>>> cope/main
                 $check_result = $conn->query($check_sql);
                 
                 if ($check_result->num_rows > 0) {

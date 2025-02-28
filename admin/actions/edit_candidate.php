@@ -34,6 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
+<<<<<<< HEAD
     // Check if the position is being changed and if there are votes associated with the current position
     $current_position_query = "SELECT position FROM candidates WHERE id = '$candidate_id'";
     $current_position_result = $conn->query($current_position_query);
@@ -50,6 +51,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
+=======
+>>>>>>> cope/main
     // Update candidate
     $sql = "UPDATE candidates SET 
             position = '$position',
@@ -61,6 +64,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $image_sql
             WHERE id = '$candidate_id'";
 
+<<<<<<< HEAD
     // TODO: Add logic to update vote count if necessary
 
     if ($conn->query($sql) === TRUE) {
@@ -73,3 +77,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
+=======
+    if ($conn->query($sql) === TRUE) {
+        header("Location: ../candidates.php?success=Candidate updated successfully");
+    } else {
+        header("Location: ../candidates.php?error=Failed to update candidate: " . $conn->error);
+    }
+}
+?> 
+>>>>>>> cope/main

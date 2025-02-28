@@ -2,6 +2,11 @@
 session_start();
 include '../database/db.php';
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> cope/main
 if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
     header("Location: ../index.php");
     exit();
@@ -9,6 +14,7 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
 
 $admin_username = $_SESSION['admin_username'];
 
+<<<<<<< HEAD
 // Get the active election or the most recent completed election
 $election_sql = "SELECT id, Status FROM elections WHERE Status IN ('active', 'completed') ORDER BY Status DESC LIMIT 1";
 $election_result = $conn->query($election_sql);
@@ -90,6 +96,22 @@ if ($has_election) {
 }
 
 // Keep queries that don't depend on election_id outside
+=======
+// Get the active election
+$active_election_sql = "SELECT id FROM elections WHERE Status = 'active' LIMIT 1";
+$active_election_result = $conn->query($active_election_sql);
+
+if ($active_election_result->num_rows > 0) {
+    $active_election = $active_election_result->fetch_assoc();
+    $election_id = $active_election['id']; // Set the election ID
+} else {
+    // Handle the case where there are no active elections
+    echo "<p>No active elections available.</p>";
+    exit();
+}
+
+// Get statistics
+>>>>>>> cope/main
 $stats = [
     'total_students' => $conn->query("SELECT COUNT(*) as count FROM students")->fetch_assoc()['count'],
     'total_elections' => $conn->query("SELECT COUNT(*) as count FROM elections")->fetch_assoc()['count'],
@@ -103,6 +125,7 @@ $recent_elections = $conn->query("
     SELECT 
         e.*,
         COUNT(DISTINCT c.id) as candidate_count,
+<<<<<<< HEAD
         (
             SELECT COUNT(DISTINCT v.student_id) 
             FROM votes v 
@@ -119,6 +142,13 @@ $recent_elections = $conn->query("
         ) as participation_rate
     FROM elections e
     LEFT JOIN candidates c ON e.id = c.election_id
+=======
+        COUNT(DISTINCT v.id) as vote_count,
+        (SELECT COUNT(*) FROM students) as total_students
+    FROM elections e
+    LEFT JOIN candidates c ON e.id = c.election_id
+    LEFT JOIN votes v ON e.id = v.election_id
+>>>>>>> cope/main
     GROUP BY e.id
     ORDER BY e.created_at DESC
     LIMIT 5
@@ -154,6 +184,51 @@ $partylist_stats = $conn->query("
     ORDER BY candidate_count DESC
 ");
 
+<<<<<<< HEAD
+=======
+// Fetch votes per candidate with positions
+$votes_per_candidate_sql = "
+    SELECT 
+        c.student_id, 
+        s.FullName AS student_name, 
+        c.position,
+        COUNT(v.id) AS vote_count
+    FROM candidates c
+    LEFT JOIN votes v ON c.id = v.candidate_id
+    JOIN students s ON c.student_id = s.StudentID
+    WHERE c.election_id = '$election_id'
+    GROUP BY c.id
+    ORDER BY c.position, vote_count DESC
+";
+
+$votes_per_candidate_result = $conn->query($votes_per_candidate_sql);
+
+$candidate_labels = [];
+$vote_counts = [];
+$backgroundColor = [];
+$positionColors = [
+    'President' => 'rgba(59, 130, 246, 0.8)', // Blue
+    'Vice President' => 'rgba(16, 185, 129, 0.8)', // Green
+    'Secretary' => 'rgba(245, 158, 11, 0.8)', // Yellow
+    'Treasurer' => 'rgba(139, 92, 246, 0.8)', // Purple
+    'Auditor' => 'rgba(239, 68, 68, 0.8)', // Red
+    'PIO' => 'rgba(236, 72, 153, 0.8)', // Pink
+    'Protocol Officer' => 'rgba(14, 165, 233, 0.8)', // Sky Blue
+    'Grade 7 Representative' => 'rgba(168, 85, 247, 0.8)', // Purple
+    'Grade 8 Representative' => 'rgba(251, 146, 60, 0.8)', // Orange
+    'Grade 9 Representative' => 'rgba(34, 197, 94, 0.8)', // Green
+    'Grade 10 Representative' => 'rgba(244, 63, 94, 0.8)', // Rose
+    'Grade 11 Representative' => 'rgba(45, 212, 191, 0.8)', // Teal
+    'Grade 12 Representative' => 'rgba(234, 179, 8, 0.8)', // Yellow
+];
+
+while ($row = $votes_per_candidate_result->fetch_assoc()) {
+    $candidate_labels[] = $row['student_name'] . ' (' . $row['position'] . ')';
+    $vote_counts[] = $row['vote_count'];
+    $backgroundColor[] = $positionColors[$row['position']] ?? 'rgba(156, 163, 175, 0.8)'; // Default gray if position not found
+}
+
+>>>>>>> cope/main
 // Get total students
 $total_students_sql = "SELECT COUNT(*) as total FROM students";
 $total_students_result = $conn->query($total_students_sql);
@@ -196,6 +271,34 @@ while ($trend = $election_trends_result->fetch_assoc()) {
         : 0;
     $participation_rates[] = $participation_rate;
 }
+<<<<<<< HEAD
+=======
+
+// Add this query after the existing queries
+$candidate_summary_sql = "
+    SELECT 
+        c.position,
+        s.FullName,
+        COUNT(v.id) as vote_count,
+        c.partylist_name
+    FROM candidates c
+    LEFT JOIN votes v ON c.id = v.candidate_id
+    JOIN students s ON c.student_id = s.StudentID
+    WHERE c.election_id = '$election_id'
+    GROUP BY c.id
+    ORDER BY c.position, vote_count DESC
+";
+$candidate_summary_result = $conn->query($candidate_summary_sql);
+
+// Organize candidates by position
+$positions_summary = [];
+while ($row = $candidate_summary_result->fetch_assoc()) {
+    if (!isset($positions_summary[$row['position']])) {
+        $positions_summary[$row['position']] = [];
+    }
+    $positions_summary[$row['position']][] = $row;
+}
+>>>>>>> cope/main
 ?>
 
 <!DOCTYPE html>
@@ -208,6 +311,10 @@ while ($trend = $election_trends_result->fetch_assoc()) {
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<<<<<<< HEAD
+=======
+
+>>>>>>> cope/main
 </head>
 
 <body class="bg-gray-50">
@@ -216,6 +323,11 @@ while ($trend = $election_trends_result->fetch_assoc()) {
 
     <div class="flex-1 overflow-auto">
       <!-- Top Navigation -->
+<<<<<<< HEAD
+=======
+      <!-- Sidebar Toggle Button -->
+
+>>>>>>> cope/main
       <div class="bg-white shadow-sm px-6 py-3 flex justify-between items-center sticky top-0 z-10">
         <h1 class="text-2xl font-bold text-gray-800">Dashboard Overview</h1>
         <div class="flex items-center space-x-4">
@@ -226,6 +338,7 @@ while ($trend = $election_trends_result->fetch_assoc()) {
             <i class="fas fa-sign-out-alt"></i>
             Logout
           </a>
+<<<<<<< HEAD
 
         </div>
       </div>
@@ -243,6 +356,11 @@ while ($trend = $election_trends_result->fetch_assoc()) {
         </div>
       </div>
       <?php else: ?>
+=======
+        </div>
+      </div>
+
+>>>>>>> cope/main
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
@@ -302,6 +420,7 @@ while ($trend = $election_trends_result->fetch_assoc()) {
             class="bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition duration-200">
             <div class="flex items-center justify-between">
               <div>
+<<<<<<< HEAD
                 <p class="text-sm font-medium opacity-80">Students Voted</p>
                 <?php 
                     $voted_students_sql = "SELECT COUNT(DISTINCT student_id) as count FROM votes";
@@ -316,6 +435,13 @@ while ($trend = $election_trends_result->fetch_assoc()) {
               </div>
               <div class="bg-rose-400 bg-opacity-30 p-3 rounded-lg">
                 <i class="fas fa-users-check text-2xl"></i>
+=======
+                <p class="text-sm font-medium opacity-80">Total Votes</p>
+                <h3 class="text-3xl font-bold mt-1"><?php echo $stats['total_votes']; ?></h3>
+              </div>
+              <div class="bg-rose-400 bg-opacity-30 p-3 rounded-lg">
+                <i class="fas fa-check-circle text-2xl"></i>
+>>>>>>> cope/main
               </div>
             </div>
           </div>
@@ -423,7 +549,14 @@ while ($trend = $election_trends_result->fetch_assoc()) {
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <?php 
+<<<<<<< HEAD
                     echo number_format($election['participation_rate'], 1) . '%';
+=======
+                    $participation = $election['total_students'] > 0 
+                        ? round(($election['vote_count'] / $election['total_students']) * 100) 
+                        : 0;
+                    echo $participation . '%';
+>>>>>>> cope/main
                     ?>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -436,11 +569,17 @@ while ($trend = $election_trends_result->fetch_assoc()) {
           </div>
         </div>
       </div>
+<<<<<<< HEAD
       <?php endif; ?>
     </div>
   </div>
 
   <?php if ($has_election): ?>
+=======
+    </div>
+  </div>
+
+>>>>>>> cope/main
   <script>
   // Update chart configurations
   Chart.defaults.font.family = "'Inter', 'system-ui', '-apple-system', 'sans-serif'";
@@ -624,8 +763,40 @@ while ($trend = $election_trends_result->fetch_assoc()) {
       }
     }
   });
+<<<<<<< HEAD
   </script>
   <?php endif; ?>
+=======
+  const toggleButton = document.getElementById('toggleSidebar');
+  const closeButton = document.getElementById('closeSidebar');
+  const sidebar = document.getElementById('sidebar');
+
+  // Toggle Sidebar on Click
+  toggleButton.addEventListener('click', function() {
+    if (window.innerWidth >= 768) {
+      // Desktop: Collapse sidebar
+      sidebar.classList.toggle('collapsed');
+    } else {
+      // Mobile: Show/Hide sidebar
+      sidebar.classList.toggle('-translate-x-full');
+    }
+  });
+
+  // Close Sidebar on Mobile when X is clicked
+  if (closeButton) {
+    closeButton.addEventListener('click', function() {
+      sidebar.classList.add('-translate-x-full');
+    });
+  }
+
+  // Close sidebar when clicking outside (Mobile Only)
+  document.addEventListener('click', function(event) {
+    if (!sidebar.contains(event.target) && !toggleButton.contains(event.target) && window.innerWidth < 768) {
+      sidebar.classList.add('-translate-x-full');
+    }
+  });
+  </script>
+>>>>>>> cope/main
 </body>
 
 </html>

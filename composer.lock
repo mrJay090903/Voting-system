@@ -4,7 +4,11 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
+<<<<<<< HEAD
     "content-hash": "dd13c5a2f309e38044fd21517eedcd9c",
+=======
+    "content-hash": "c31488d34afd050cbc7b6ea353ada0c0",
+>>>>>>> cope/main
     "packages": [
         {
             "name": "carbonphp/carbon-doctrine-types",
@@ -2127,6 +2131,7 @@
             "time": "2024-09-25T14:20:29+00:00"
         },
         {
+<<<<<<< HEAD
             "name": "tecnickcom/tcpdf",
             "version": "6.8.2",
             "source": {
@@ -2200,6 +2205,8 @@
             "time": "2025-01-26T14:03:12+00:00"
         },
         {
+=======
+>>>>>>> cope/main
             "name": "voku/portable-ascii",
             "version": "2.0.3",
             "source": {

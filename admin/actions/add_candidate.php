@@ -70,6 +70,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     )";
 
     if ($conn->query($sql) === TRUE) {
+<<<<<<< HEAD
         echo json_encode(['success' => true]);
     } else {
         echo json_encode([
@@ -79,3 +80,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
+=======
+        header("Location: ../candidates.php?success=Candidate added successfully");
+    } else {
+        header("Location: ../candidates.php?error=Failed to add candidate: " . $conn->error);
+    }
+}
+?> 
+>>>>>>> cope/main

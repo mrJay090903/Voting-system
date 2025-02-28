@@ -1,9 +1,15 @@
 <?php return array(
     'root' => array(
         'name' => '__root__',
+<<<<<<< HEAD
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
         'reference' => 'ca7a53998af2d877a3a957316eda7afe69ad3f3f',
+=======
+        'pretty_version' => '1.0.0+no-version-set',
+        'version' => '1.0.0.0',
+        'reference' => null,
+>>>>>>> cope/main
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +17,15 @@
     ),
     'versions' => array(
         '__root__' => array(
+<<<<<<< HEAD
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
             'reference' => 'ca7a53998af2d877a3a957316eda7afe69ad3f3f',
+=======
+            'pretty_version' => '1.0.0+no-version-set',
+            'version' => '1.0.0.0',
+            'reference' => null,
+>>>>>>> cope/main
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -307,6 +319,7 @@
                 0 => '2.3|3.0',
             ),
         ),
+<<<<<<< HEAD
         'tecnickcom/tcpdf' => array(
             'pretty_version' => '6.8.2',
             'version' => '6.8.2.0',
@@ -316,6 +329,8 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+=======
+>>>>>>> cope/main
         'voku/portable-ascii' => array(
             'pretty_version' => '2.0.3',
             'version' => '2.0.3.0',
@@ -326,4 +341,8 @@
             'dev_requirement' => false,
         ),
     ),
+<<<<<<< HEAD
 );
+=======
+);
+>>>>>>> cope/main

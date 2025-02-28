@@ -94,18 +94,34 @@ session_start();
               <input type="hidden" name="user_type" value="student">
               <div class="space-y-4">
                 <div>
+<<<<<<< HEAD
+=======
+                  <label class="block text-gray-600">Full Name</label>
+                  <input type="text" name="full_name" required
+                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter your full name">
+                </div>
+                <div>
+>>>>>>> cope/main
                   <label class="block text-gray-600">Student ID</label>
                   <input type="text" name="student_id" required
                     class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Enter your student ID">
                 </div>
+<<<<<<< HEAD
 
+=======
+>>>>>>> cope/main
                 <div class="flex items-center justify-between">
                   <div class="flex items-center">
                     <input type="checkbox" class="mr-2" id="remember">
                     <label for="remember">Remember me</label>
                   </div>
+<<<<<<< HEAD
 
+=======
+                  <a href="#" class="text-blue-600 hover:underline">Forgot Password?</a>
+>>>>>>> cope/main
                 </div>
                 <button type="submit"
                   class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">

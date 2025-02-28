@@ -22,7 +22,17 @@ $update_status_sql = "
 ";
 $conn->query($update_status_sql);
 
+<<<<<<< HEAD
 // Get elections with additional information
+=======
+// Handle Search
+$search_query = '';
+if (isset($_POST['search'])) {
+    $search_query = mysqli_real_escape_string($conn, $_POST['search_query']);
+}
+
+// Get elections with additional information, including optional search
+>>>>>>> cope/main
 $elections = $conn->query("
     SELECT 
         e.*,
@@ -32,6 +42,10 @@ $elections = $conn->query("
     FROM elections e
     LEFT JOIN candidates c ON e.id = c.election_id
     LEFT JOIN votes v ON e.id = v.election_id
+<<<<<<< HEAD
+=======
+    WHERE e.title LIKE '%$search_query%'
+>>>>>>> cope/main
     GROUP BY e.id
     ORDER BY 
         CASE e.status
@@ -56,10 +70,14 @@ $elections = $conn->query("
 </head>
 
 <body class="bg-gray-100">
+<<<<<<< HEAD
   <?php include '../components/notification.php';
     if (isset($_GET['success'])) echo showNotification($_GET['success']);
     if (isset($_GET['error'])) echo showNotification($_GET['error'], 'error');
     ?>
+=======
+
+>>>>>>> cope/main
 
   <div class="flex">
     <!-- Include Sidebar -->
@@ -81,7 +99,25 @@ $elections = $conn->query("
 
       <!-- Elections List -->
       <div class="p-6">
+<<<<<<< HEAD
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
+=======
+
+        <div class="flex justify-end">
+
+          <form method="POST" class="flex space-x-4">
+            <input type="text" name="search_query" value="<?php echo htmlspecialchars($search_query); ?>"
+              placeholder="Search by Title" class="border rounded px-4 py-2">
+            <button type="submit" name="search"
+              class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">Search</button>
+          </form>
+        </div>
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+          <div class="flex justify-between items-center mb-4">
+
+
+          </div>
+>>>>>>> cope/main
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
@@ -116,12 +152,16 @@ $elections = $conn->query("
                   <?php echo $election['vote_count']; ?>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
+<<<<<<< HEAD
                   <?php 
                       $participation = $election['total_students'] > 0 
                           ? min(100, round(($election['vote_count'] / $election['total_students']) * 100)) 
                           : 0;
                       echo $participation;
                   ?>%
+=======
+                  <?php echo $election['total_students'] > 0 ? round(($election['vote_count'] / $election['total_students']) * 100) : 0; ?>%
+>>>>>>> cope/main
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <?php echo date('M d, Y h:i A', strtotime($election['start_date'])); ?>
@@ -294,6 +334,7 @@ $elections = $conn->query("
   function viewResults(electionId) {
     window.location.href = `results.php?election_id=${electionId}`;
   }
+<<<<<<< HEAD
 
   function openPartylistModal() {
     document.getElementById('partylistModal').classList.remove('hidden');
@@ -308,6 +349,8 @@ $elections = $conn->query("
       window.location.href = `actions/delete_partylist.php?id=${partylistId}`;
     }
   }
+=======
+>>>>>>> cope/main
   </script>
 </body>
 
